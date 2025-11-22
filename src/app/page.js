@@ -4,6 +4,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import Image from "next/image";
+import Link from "next/link";
 import { Settings, MapPin, RefreshCw, Camera } from "lucide-react";
 import { SettingsProvider, useSettings } from "./context/SettingsContext";
 import PrayerGrid from "./components/PrayerGrid";
@@ -150,7 +151,16 @@ function AppContent() {
         </div>
         {times && <PrayerGrid times={times} nextPrayer={nextPrayer} selectedPrayer={selectedPrayer} onSelectPrayer={setSelectedPrayer} t={t} />}
       </div>
-
+<div className="absolute bottom-3 left-0 w-full flex justify-center items-center gap-3 z-20 text-[10px] md:text-xs text-white/60 font-light tracking-wide">
+        <span>&copy; {new Date().getFullYear()} Namaz Vakti</span>
+        <span className="w-1 h-1 bg-white/40 rounded-full"></span>
+        <Link 
+          href="/privacy-policy" 
+          className="hover:text-white hover:underline underline-offset-2 transition-all"
+        >
+          {language === 'en' ? 'Privacy Policy' : 'Gizlilik Politikası'}
+        </Link>
+      </div>
       <div className="absolute bottom-2 right-3 z-20 flex flex-col items-end gap-1">
         <div className="group flex items-center gap-1.5 px-2.5 py-1 bg-black/20 hover:bg-black/60 backdrop-blur-sm border border-white/5 rounded-full text-[10px] text-white/60 hover:text-white transition-all duration-300 cursor-default">
            <Camera size={12} /><span className="max-w-[100px] truncate font-light tracking-wide">{photoCredit.author}</span>
