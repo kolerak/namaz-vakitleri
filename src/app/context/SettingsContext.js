@@ -44,7 +44,7 @@ const translations = {
     locationDenied: "Konum izni reddedildi.",
     locationFailed: "Konum alınamadı.",
     cityDetectFailed: "Şehir bulunamadı, koordinatlar kullanılıyor.",
-    embedHint: "Eklenti modu aktif",
+    embedHint: "",
 
     // ✅ NEW keys for consistent i18n
     notifOn: "Bildirimler Açık",
@@ -88,7 +88,7 @@ const translations = {
     locationDenied: "Location permission denied.",
     locationFailed: "Couldn't get location.",
     cityDetectFailed: "Couldn't detect city name, using coordinates.",
-    embedHint: "Extension mode active",
+    embedHint: "",
 
     // ✅ NEW
     notifOn: "Notifications On",
@@ -131,7 +131,7 @@ const translations = {
     locationDenied: "تم رفض إذن الموقع.",
     locationFailed: "تعذر الحصول على الموقع.",
     cityDetectFailed: "تعذر تحديد المدينة، سيتم استخدام الإحداثيات.",
-    embedHint: "وضع الإضافة نشط",
+    embedHint: "",
 
     // ✅ NEW
     notifOn: "الإشعارات مفعّلة",
