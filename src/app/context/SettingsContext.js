@@ -1,7 +1,21 @@
 "use client";
-import React, { createContext, useState, useContext, useEffect } from 'react';
 
-const SettingsContext = createContext();
+import React, {
+  createContext,
+  useState,
+  useContext,
+  useEffect,
+  useMemo,
+} from "react";
+
+const SettingsContext = createContext(null);
+
+const STORAGE_KEYS = {
+  city: "prayer_city",
+  language: "prayer_language",
+  coords: "prayer_coords",
+  notifications: "prayer_notifications",
+};
 
 const translations = {
   tr: {
@@ -14,6 +28,8 @@ const translations = {
     location: "Konum",
     autoLocation: "Otomatik Konum Bul",
     save: "Kaydet",
+    close: "Kapat",
+    retry: "Tekrar dene",
     fajr: "İmsak",
     sunrise: "Güneş",
     dhuhr: "Öğle",
@@ -22,8 +38,30 @@ const translations = {
     isha: "Yatsı",
     prayerTimes: "Namaz Vakitleri",
     notificationPermission: "Bildirim İzni",
-    notifications: "Bildirimler"
+    notifications: "Bildirimler",
+    enable: "Aç",
+    disable: "Kapat",
+    locationDenied: "Konum izni reddedildi.",
+    locationFailed: "Konum alınamadı.",
+    cityDetectFailed: "Şehir bulunamadı, koordinatlar kullanılıyor.",
+    embedHint: "Eklenti modu aktif",
+
+    // ✅ NEW keys for consistent i18n
+    notifOn: "Bildirimler Açık",
+    notifOff: "Bildirimleri Aç",
+    browserNoNotif: "Tarayıcınız bildirimleri desteklemiyor.",
+    permissionDenied:
+      "Bildirim izni reddedildi. Tarayıcı ayarlarından izin vermelisiniz.",
+    testTitle: "Bismillah!",
+    testBody:
+      "Bildirimler başarıyla açıldı. Namaz vakitlerinde haber vereceğim.",
+    modalDesc:
+      "Dil, konum ve bildirim ayarlarını buradan değiştirebilirsiniz.",
+    or: "- VEYA -",
+    autoLocationAria: "Otomatik konum bul",
+    closeAria: "Ayarları kapat",
   },
+
   en: {
     loading: "Loading...",
     nextPrayer: "Next Prayer",
@@ -34,6 +72,8 @@ const translations = {
     location: "Location",
     autoLocation: "Find Auto Location",
     save: "Save",
+    close: "Close",
+    retry: "Retry",
     fajr: "Fajr",
     sunrise: "Sunrise",
     dhuhr: "Dhuhr",
@@ -42,8 +82,29 @@ const translations = {
     isha: "Isha",
     prayerTimes: "Prayer Times",
     notificationPermission: "Notification Permission",
-    notifications: "Notifications"
+    notifications: "Notifications",
+    enable: "Enable",
+    disable: "Disable",
+    locationDenied: "Location permission denied.",
+    locationFailed: "Couldn't get location.",
+    cityDetectFailed: "Couldn't detect city name, using coordinates.",
+    embedHint: "Extension mode active",
+
+    // ✅ NEW
+    notifOn: "Notifications On",
+    notifOff: "Enable Notifications",
+    browserNoNotif: "Your browser doesn’t support notifications.",
+    permissionDenied:
+      "Notification permission denied. Please allow it in browser settings.",
+    testTitle: "Bismillah!",
+    testBody: "Notifications enabled. I’ll notify you at prayer times.",
+    modalDesc:
+      "You can change language, location, and notification settings here.",
+    or: "- OR -",
+    autoLocationAria: "Find auto location",
+    closeAria: "Close settings",
   },
+
   ar: {
     loading: "جار التحميل...",
     nextPrayer: "الصلاة التالية",
@@ -54,6 +115,8 @@ const translations = {
     location: "موقع",
     autoLocation: "تحديد الموقع تلقائيا",
     save: "حفظ",
+    close: "إغلاق",
+    retry: "أعد المحاولة",
     fajr: "الفجر",
     sunrise: "شروق",
     dhuhr: "الظهر",
@@ -62,79 +125,135 @@ const translations = {
     isha: "العشاء",
     prayerTimes: "أوقات الصلاة",
     notificationPermission: "إذن الإخطار",
-    notifications: "إشعارات"
-  }
+    notifications: "إشعارات",
+    enable: "تفعيل",
+    disable: "إيقاف",
+    locationDenied: "تم رفض إذن الموقع.",
+    locationFailed: "تعذر الحصول على الموقع.",
+    cityDetectFailed: "تعذر تحديد المدينة، سيتم استخدام الإحداثيات.",
+    embedHint: "وضع الإضافة نشط",
+
+    // ✅ NEW
+    notifOn: "الإشعارات مفعّلة",
+    notifOff: "تفعيل الإشعارات",
+    browserNoNotif: "المتصفح لا يدعم الإشعارات.",
+    permissionDenied:
+      "تم رفض إذن الإشعارات. يرجى تفعيله من إعدادات المتصفح.",
+    testTitle: "بسم الله!",
+    testBody: "تم تفعيل الإشعارات. سأقوم بإعلامك في أوقات الصلاة.",
+    modalDesc:
+      "يمكنك تغيير اللغة والموقع وإعدادات الإشعارات من هنا.",
+    or: "- أو -",
+    autoLocationAria: "تحديد الموقع تلقائياً",
+    closeAria: "إغلاق الإعدادات",
+  },
 };
 
 export function SettingsProvider({ children }) {
-  const [language, setLanguage] = useState('tr');
-  const [city, setCity] = useState('Istanbul'); 
+  const [language, setLanguage] = useState("tr");
+  const [city, setCity] = useState("Istanbul");
   const [coords, setCoords] = useState(null);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
-  
-  // YENİ: Yükleme Kilidi
-  const [isLoading, setIsLoading] = useState(true);
 
-  // 1. OKUMA İŞLEMİ (Sadece sayfa ilk açıldığında çalışır)
+  const [isLoading, setIsLoading] = useState(true);
+  const [settingsError, setSettingsError] = useState(null);
+
+  // Read once on mount
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const savedCity = localStorage.getItem('prayer_city');
-      const savedLanguage = localStorage.getItem('prayer_language');
-      const savedCoords = localStorage.getItem('prayer_coords');
-      const savedNotif = localStorage.getItem('prayer_notifications');
+    if (typeof window === "undefined") return;
+
+    try {
+      const savedCity = localStorage.getItem(STORAGE_KEYS.city);
+      const savedLanguage = localStorage.getItem(STORAGE_KEYS.language);
+      const savedCoords = localStorage.getItem(STORAGE_KEYS.coords);
+      const savedNotif = localStorage.getItem(STORAGE_KEYS.notifications);
 
       if (savedCity) setCity(savedCity);
-      if (savedLanguage) setLanguage(savedLanguage);
-      if (savedNotif) setNotificationsEnabled(JSON.parse(savedNotif));
-      
-      if (savedCoords && savedCoords !== "undefined" && savedCoords !== "null") {
-        try {
-          const parsedCoords = JSON.parse(savedCoords);
-          if (parsedCoords && parsedCoords.lat) {
-             setCoords(parsedCoords);
-          }
-        } catch (e) {
-          console.error("Koordinat okuma hatası", e);
-        }
+      if (savedLanguage && translations[savedLanguage]) {
+        setLanguage(savedLanguage);
       }
-      
-      // Okuma bitti, kilidi aç!
+      if (savedNotif != null) {
+        setNotificationsEnabled(JSON.parse(savedNotif));
+      }
+
+      if (
+        savedCoords &&
+        savedCoords !== "undefined" &&
+        savedCoords !== "null"
+      ) {
+        const parsed = JSON.parse(savedCoords);
+        if (parsed?.lat && parsed?.lng) setCoords(parsed);
+      }
+    } catch (e) {
+      console.error("Settings read error:", e);
+      setSettingsError("Settings could not be loaded.");
+    } finally {
       setIsLoading(false);
     }
   }, []);
 
-  // 2. YAZMA İŞLEMİ (Sadece veri değişirse çalışır)
+  // Write on change (after load)
   useEffect(() => {
-    // DİKKAT: Eğer hala yükleniyorsa sakın kaydetme! (Varsayılanlar ezmesin)
-    if (isLoading) return;
+    if (isLoading || typeof window === "undefined") return;
+    try {
+      localStorage.setItem(STORAGE_KEYS.city, city);
+      localStorage.setItem(STORAGE_KEYS.language, language);
+      localStorage.setItem(
+        STORAGE_KEYS.notifications,
+        JSON.stringify(notificationsEnabled)
+      );
 
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('prayer_city', city);
-      localStorage.setItem('prayer_language', language);
-      localStorage.setItem('prayer_notifications', JSON.stringify(notificationsEnabled));
-      
       if (coords) {
-        localStorage.setItem('prayer_coords', JSON.stringify(coords));
+        localStorage.setItem(STORAGE_KEYS.coords, JSON.stringify(coords));
+      } else {
+        localStorage.removeItem(STORAGE_KEYS.coords);
       }
+    } catch (e) {
+      console.error("Settings write error:", e);
+      setSettingsError("Settings could not be saved.");
     }
   }, [city, language, coords, notificationsEnabled, isLoading]);
 
-  const t = translations[language];
+  const t = useMemo(
+    () => translations[language] || translations.tr,
+    [language]
+  );
+
+  const value = useMemo(
+    () => ({
+      language,
+      setLanguage,
+      city,
+      setCity,
+      coords,
+      setCoords,
+      notificationsEnabled,
+      setNotificationsEnabled,
+      isLoading,
+      settingsError,
+      setSettingsError,
+      t,
+    }),
+    [
+      language,
+      city,
+      coords,
+      notificationsEnabled,
+      isLoading,
+      settingsError,
+      t,
+    ]
+  );
 
   return (
-    <SettingsContext.Provider value={{ 
-      language, setLanguage, 
-      city, setCity, 
-      coords, setCoords, 
-      notificationsEnabled, setNotificationsEnabled, 
-      isLoading, // Bunu dışarı açtık ki sayfa yüklenirken beklesin
-      t 
-    }}>
+    <SettingsContext.Provider value={value}>
       {children}
     </SettingsContext.Provider>
   );
 }
 
 export function useSettings() {
-  return useContext(SettingsContext);
+  const ctx = useContext(SettingsContext);
+  if (!ctx) throw new Error("useSettings must be used inside SettingsProvider");
+  return ctx;
 }

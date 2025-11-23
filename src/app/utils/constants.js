@@ -1,6 +1,6 @@
 // src/utils/constants.js
 export const BACKGROUND_IMAGES = [
-  "https://images.unsplash.com/photo-1564121211835-e88c852648ab?q=80&w=1920&auto=format&fit=crop", // Cami
+  "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?q=80&w=1920&auto=format&fit=crop",
   "https://images.unsplash.com/photo-1584551246679-0daf3d275d0f?q=80&w=1920&auto=format&fit=crop", // Kubbe
   "https://images.unsplash.com/photo-1537723894258-7c48f33db65b?q=80&w=1920&auto=format&fit=crop", // Doğa
   "https://images.unsplash.com/photo-1519817650390-64a93db51149?q=80&w=1920&auto=format&fit=crop", // Gökyüzü
