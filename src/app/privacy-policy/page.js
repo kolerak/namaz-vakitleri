@@ -1,180 +1,386 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-import { ArrowLeft, Globe } from "lucide-react";
+import { ArrowLeft, ArrowUp, Shield, Lock, Cpu, Check, Globe } from "lucide-react";
 
-// Çeviri Metinleri
-const content = {
+/**
+ * ------------------------------------------------------------------
+ * 1. STATIC CONTENT DATA
+ * Veri katmanı render döngüsünden izole edildi.
+ * ------------------------------------------------------------------
+ */
+const contentData = {
   en: {
+    metaTitle: "Privacy Policy | Namaz Vakti",
+    metaDesc: "Read our Privacy Policy to understand how Namaz Vakti uses your data. We prioritize your privacy and do not store personal information.",
     title: "Privacy Policy",
-    updated: "Last Updated: November 23, 2025",
-    back: "Back to App",
+    subtitle: "Simple, transparent, and private.",
+    updated: "Last Updated: Nov 23, 2025",
+    back: "Go Back",
     sections: [
       {
-        title: "1. Introduction",
-        text: "This Privacy Policy explains how the \"Namaz Vakti\" (Prayer Times) Chrome Extension and Web App collects, uses, and protects your information. We respect your privacy and are committed to protecting it."
+        id: "intro",
+        number: "01",
+        title: "Introduction",
+        text: "We respect your privacy. This policy explains what information the 'Namaz Vakti' extension collects and how it is used. Our goal is to be completely transparent."
       },
       {
-        title: "2. Data Collection",
-        text: "We collect the following data solely for the functionality of the application:",
+        id: "collection",
+        number: "02",
+        title: "Data Collection",
+        text: "We only collect the minimum data required for the app to work properly:",
         list: [
-          "Geolocation Data: We access your approximate location (latitude and longitude) via the browser's Geolocation API only when you grant permission.",
-          "Preferences: We store your city selection and notification preferences locally on your device."
+          { label: "Location", desc: "We use your latitude and longitude only to calculate prayer times." },
+          { label: "Preferences", desc: "Your city selection and settings are saved locally on your device." }
         ]
       },
       {
-        title: "3. Use of Data",
-        text: "Your data is used exclusively for the following purposes:",
+        id: "usage",
+        number: "03",
+        title: "How We Use Data",
+        text: "We do not sell or share your data. It is used strictly for the following features:",
         list: [
-          "To calculate accurate prayer times (Fajr, Dhuhr, Asr, Maghrib, Isha) for your specific location.",
-          "To determine the city name using the OpenStreetMap (Nominatim) API.",
-          "To display relevant background photos of your city using Wikimedia APIs."
+          { label: "Prayer Times", desc: "Calculating accurate times for Fajr, Dhuhr, Asr, Maghrib, and Isha." },
+          { label: "City Name", desc: "Finding the name of your city based on your location." },
+          { label: "Backgrounds", desc: "Showing relevant photos of your city." }
         ]
       },
       {
-        title: "4. Data Storage & Security",
-        text: "We do not store your personal data on our servers. All your preferences (City, Language, Notification settings) are stored locally in your browser's LocalStorage.",
-        subtext: "Location data is processed instantly to fetch prayer times and is not saved to any external database for tracking purposes."
+        id: "storage",
+        number: "04",
+        title: "Data Storage",
+        text: "We do not store your personal data on our servers. Everything happens on your device.",
+        subtext: "Your location is used instantly to fetch data and is not saved to any database."
       },
       {
-        title: "5. Third-Party Services",
-        text: "The application interacts with the following public APIs:",
+        id: "third-party",
+        number: "05",
+        title: "Third-Party Services",
+        text: "We use the following trusted public services to provide data:",
         list: [
-          "Aladhan API: For prayer time calculations.",
-          "OpenStreetMap: For reverse geocoding (finding city name from coordinates).",
-          "Wikimedia Commons: For city background images."
+          { label: "Aladhan API", desc: "For prayer time calculations." },
+          { label: "OpenStreetMap", desc: "To find your city name." },
+          { label: "Wikimedia", desc: "For city background images." }
         ]
       },
       {
-        title: "6. Contact",
-        text: "If you have any questions about this Privacy Policy, please contact us via the Chrome Web Store support page."
+        id: "contact",
+        number: "06",
+        title: "Contact Us",
+        text: "If you have any questions about this policy, please contact us via the Chrome Web Store support page."
       },
       {
-        title: "7. Open Access",
-        text: "This app is an open access app an can be found at github."
+        id: "opensource",
+        number: "07",
+        title: "Open Source",
+        text: "Our code is open source. You can review exactly how it works on our GitHub repository."
       }
-      
     ]
   },
   tr: {
+    metaTitle: "Gizlilik Politikası | Namaz Vakti",
+    metaDesc: "Namaz Vakti uygulamasının verilerinizi nasıl kullandığını öğrenin. Kişisel verilerinizi saklamıyoruz ve gizliliğinize önem veriyoruz.",
     title: "Gizlilik Politikası",
-    updated: "Son Güncelleme: 23 Kasım 2025",
-    back: "Uygulamaya Dön",
+    subtitle: "Basit, şeffaf ve güvenli.",
+    updated: "Son Güncelleme: 1 Aralık 2025",
+    back: "Geri Dön",
     sections: [
       {
-        title: "1. Giriş",
-        text: "\"Namaz Vakti\" Chrome Eklentisi ve Web Uygulaması olarak gizliliğinize önem veriyoruz. Bu politika, bilgilerinizin nasıl toplandığını, kullanıldığını ve korunduğunu açıklar."
+        id: "intro",
+        number: "01",
+        title: "Giriş",
+        text: "Gizliliğinize saygı duyuyoruz. Bu politika, 'Namaz Vakti' eklentisinin hangi bilgileri topladığını ve nasıl kullandığını açıklar."
       },
       {
-        title: "2. Veri Toplama",
-        text: "Uygulamanın çalışabilmesi için sadece aşağıdaki veriler kullanılır:",
+        id: "collection",
+        number: "02",
+        title: "Toplanan Veriler",
+        text: "Sadece uygulamanın çalışması için gerekli olan minimum veriyi kullanıyoruz:",
         list: [
-          "Coğrafi Konum Verisi: Sadece siz izin verdiğinizde, namaz vaktini hesaplamak için tarayıcınızın konum servisine (enlem ve boylam) erişiriz.",
-          "Tercihler: Şehir seçiminiz ve bildirim ayarlarınız cihazınızda yerel olarak saklanır."
+          { label: "Konum", desc: "Enlem ve boylam bilgilerinizi sadece namaz vakitlerini hesaplamak için kullanırız." },
+          { label: "Tercihler", desc: "Şehir seçiminiz ve ayarlarınız sadece kendi cihazınızda saklanır." }
         ]
       },
       {
-        title: "3. Verilerin Kullanımı",
-        text: "Verileriniz sadece şu amaçlarla kullanılır:",
+        id: "usage",
+        number: "03",
+        title: "Verilerin Kullanımı",
+        text: "Verilerinizi satmıyoruz veya paylaşmıyoruz. Bilgileriniz sadece şu özellikler için kullanılır:",
         list: [
-          "Bulunduğunuz konuma özel namaz vakitlerini (İmsak, Öğle, İkindi, Akşam, Yatsı) hesaplamak.",
-          "OpenStreetMap API kullanarak bulunduğunuz şehrin ismini tespit etmek.",
-          "Wikimedia API kullanarak şehrinize uygun arka plan fotoğrafını getirmek."
+          { label: "Namaz Vakitleri", desc: "İmsak, Öğle, İkindi, Akşam ve Yatsı vakitlerinin hesaplanması." },
+          { label: "Şehir İsmi", desc: "Konumunuza göre bulunduğunuz şehrin adının bulunması." },
+          { label: "Arka Planlar", desc: "Şehrinize uygun fotoğrafların gösterilmesi." }
         ]
       },
       {
-        title: "4. Veri Saklama ve Güvenlik",
-        text: "Kişisel verilerinizi sunucularımızda saklamayız. Tüm tercihleriniz (Şehir, Dil, Bildirimler) tarayıcınızın LocalStorage (Yerel Hafıza) alanında tutulur.",
-        subtext: "Konum verisi anlık olarak işlenir ve herhangi bir takip amacıyla veritabanına kaydedilmez."
+        id: "storage",
+        number: "04",
+        title: "Veri Saklama",
+        text: "Kişisel verilerinizi sunucularımızda saklamıyoruz. Her şey sizin cihazınızda gerçekleşir.",
+        subtext: "Konum bilginiz veri çekmek için anlık kullanılır ve hiçbir veritabanına kaydedilmez."
       },
       {
-        title: "5. Üçüncü Taraf Hizmetler",
-        text: "Uygulama şu güvenilir kamu servisleriyle iletişim kurar:",
+        id: "third-party",
+        number: "05",
+        title: "Kullanılan Servisler",
+        text: "Veri sağlamak için aşağıdaki güvenilir servisleri kullanıyoruz:",
         list: [
-          "Aladhan API: Namaz vakitlerini hesaplamak için.",
-          "OpenStreetMap: Koordinattan şehir ismini bulmak için.",
-          "Wikimedia Commons: Şehir fotoğrafları için."
+          { label: "Aladhan API", desc: "Namaz vakti hesaplamaları için." },
+          { label: "OpenStreetMap", desc: "Şehir ismini bulmak için." },
+          { label: "Wikimedia", desc: "Şehir fotoğrafları için." }
         ]
       },
       {
-        title: "6. İletişim",
-        text: "Bu gizlilik politikası hakkında sorularınız varsa, Chrome Web Mağazası destek sayfası üzerinden bize ulaşabilirsiniz."
+        id: "contact",
+        number: "06",
+        title: "İletişim",
+        text: "Bu politika hakkında sorularınız varsa, Chrome Web Mağazası destek sayfası üzerinden bize ulaşabilirsiniz."
       },
       {
-        title: "7. Açık Kaynak Kodlu",
-        text: "Bu uygulama açık kaynak kodludur ve GitHub'da bulunabilir."
+        id: "opensource",
+        number: "07",
+        title: "Açık Kaynak",
+        text: "Kodlarımız açık kaynaktır. Uygulamanın nasıl çalıştığını GitHub üzerinden inceleyebilirsiniz."
       }
     ]
   }
 };
 
-export default function PrivacyPolicy() {
-  const [lang, setLang] = useState('en'); // Varsayılan İngilizce (Google için)
-  const t = content[lang];
+/**
+ * ------------------------------------------------------------------
+ * 2. INJECTED STYLES (GPU ACCELERATED)
+ * Harici CSS dosyasına gerek yok. GPU optimizasyonlu animasyonlar.
+ * ------------------------------------------------------------------
+ */
+const GlobalStyles = () => (
+  <style jsx global>{`
+    @keyframes liquid-blob {
+      0% { transform: translate(0px, 0px) scale(1); }
+      33% { transform: translate(30px, -50px) scale(1.1); }
+      66% { transform: translate(-20px, 20px) scale(0.9); }
+      100% { transform: translate(0px, 0px) scale(1); }
+    }
+    @keyframes float-slow {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+    .animate-blob {
+      animation: liquid-blob 10s infinite cubic-bezier(0.4, 0, 0.2, 1);
+      will-change: transform; /* GPU Layer Hack */
+    }
+    .animate-float {
+      animation: float-slow 6s ease-in-out infinite;
+      will-change: transform;
+    }
+    .glass-panel {
+      background: rgba(23, 23, 23, 0.4); /* Zinc-900 with opacity */
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+    }
+    .text-gradient {
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      background-image: linear-gradient(135deg, #FFFFFF 0%, #A1A1AA 100%);
+    }
+    /* Smooth Scrollbar for Webkit */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #09090b; }
+    ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #52525b; }
+    
+    html {
+      scroll-behavior: smooth;
+    }
+  `}</style>
+);
 
-  // Sayfa Başlığını Değiştir
+/**
+ * ------------------------------------------------------------------
+ * 3. MAIN COMPONENT
+ * ------------------------------------------------------------------
+ */
+export default function PrivacyPolicy() {
+  const [lang, setLang] = useState("en");
+  const [showTopBtn, setShowTopBtn] = useState(false);
+  
+  // useMemo: Veri işlemeyi render'dan ayırır (Performans +1)
+  const t = useMemo(() => contentData[lang], [lang]);
+
+  // Scroll Listener
   useEffect(() => {
-    document.title = lang === 'en' ? "Privacy Policy - Namaz Vakti" : "Gizlilik Politikası - Namaz Vakti";
-  }, [lang]);
+    const handleScroll = () => setShowTopBtn(window.scrollY > 400);
+    window.addEventListener('scroll', handleScroll, { passive: true }); // Passive listener for scrolling performance
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // SEO & Meta Tag Injection (Client-Side Patch)
+  useEffect(() => {
+    document.title = t.metaTitle;
+    document.documentElement.lang = lang;
+
+    // Meta Description Güncelleme
+    let metaDescription = document.querySelector('meta[name="description"]');
+    if (metaDescription) {
+      metaDescription.content = t.metaDesc;
+    } else {
+      metaDescription = document.createElement('meta');
+      metaDescription.name = "description";
+      metaDescription.content = t.metaDesc;
+      document.head.appendChild(metaDescription);
+    }
+  }, [lang, t.metaTitle, t.metaDesc]);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   return (
-    <main className="min-h-screen bg-black text-gray-300 p-6 md:p-12 font-sans">
-      <div className="max-w-3xl mx-auto relative">
+    <>
+      <GlobalStyles />
+      <div className="relative min-h-screen bg-[#050505] text-zinc-300 font-sans selection:bg-indigo-500/30 overflow-hidden">
         
-        {/* Üst Bar: Geri Dön ve Dil Değiştir */}
-        <div className="flex justify-between items-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2 text-yellow-500 hover:text-yellow-400 transition">
-            <ArrowLeft size={20} /> {t.back}
-          </Link>
+        {/* --- LIQUID BACKGROUND (GPU Accelerated) --- */}
+        <div className="fixed inset-0 z-0 pointer-events-none opacity-50" aria-hidden="true">
+          <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] min-w-[300px] min-h-[300px] bg-indigo-900/30 rounded-full blur-[120px] animate-blob mix-blend-screen" />
+          <div className="absolute top-[20%] right-[-5%] w-[40vw] h-[40vw] min-w-[250px] min-h-[250px] bg-blue-900/20 rounded-full blur-[100px] animate-blob mix-blend-screen" style={{ animationDelay: '2s' }} />
+          <div className="absolute bottom-[-10%] left-[20%] w-[45vw] h-[45vw] min-w-[350px] min-h-[350px] bg-violet-900/20 rounded-full blur-[130px] animate-blob mix-blend-screen" style={{ animationDelay: '4s' }} />
+        </div>
 
-          {/* Dil Değiştirme Butonları */}
-          <div className="flex bg-gray-800 rounded-lg p-1">
-            <button 
-              onClick={() => setLang('en')}
-              className={`px-4 py-1 rounded-md text-sm font-medium transition ${lang === 'en' ? 'bg-gray-600 text-white' : 'text-gray-400 hover:text-white'}`}
+        {/* --- FLOATING HEADER --- */}
+        <header className="fixed top-0 left-0 right-0 z-50 flex justify-center pt-6 px-4 pointer-events-none">
+          <nav className="pointer-events-auto flex items-center gap-4 p-2 pr-2 pl-5 rounded-full glass-panel transition-transform hover:scale-[1.01] duration-300">
+            <Link 
+              href="/" 
+              className="group flex items-center gap-2 text-sm font-medium text-zinc-400 hover:text-white transition-colors"
+              aria-label={t.back}
             >
-              English
-            </button>
-            <button 
-              onClick={() => setLang('tr')}
-              className={`px-4 py-1 rounded-md text-sm font-medium transition ${lang === 'tr' ? 'bg-gray-600 text-white' : 'text-gray-400 hover:text-white'}`}
-            >
-              Türkçe
-            </button>
+              <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
+              <span className="text-[14px]">{t.back}</span>
+            </Link>
+
+            <div className="w-px h-4 bg-white/10" aria-hidden="true" />
+
+            {/* Language Toggle (Min size 13px for Accessibility) */}
+            <div className="flex bg-black/40 rounded-full p-1 border border-white/5" role="group" aria-label="Language">
+              <button 
+                onClick={() => setLang('en')}
+                aria-pressed={lang === 'en'}
+                className={`px-4 py-1.5 text-[13px] font-semibold rounded-full transition-all duration-300 ${lang === 'en' ? 'bg-zinc-700 text-white shadow-lg' : 'text-zinc-500 hover:text-zinc-300'}`}
+              >
+                English
+              </button>
+              <button 
+                onClick={() => setLang('tr')}
+                aria-pressed={lang === 'tr'}
+                className={`px-4 py-1.5 text-[13px] font-semibold rounded-full transition-all duration-300 ${lang === 'tr' ? 'bg-zinc-700 text-white shadow-lg' : 'text-zinc-500 hover:text-zinc-300'}`}
+              >
+                Türkçe
+              </button>
+            </div>
+          </nav>
+        </header>
+
+        {/* --- MAIN CONTENT --- */}
+        <main className="relative z-10 w-full max-w-7xl mx-auto px-6 py-32 md:py-40">
+          
+          {/* Hero Section */}
+          <div className="text-center mb-12 animate-float">
+            <div className="inline-flex items-center justify-center p-4 mb-8 rounded-3xl bg-white/[0.03] border border-white/[0.08] shadow-[0_0_60px_-15px_rgba(79,70,229,0.15)]">
+              <Shield size={40} className="text-indigo-400" strokeWidth={1.5} />
+            </div>
+            <h1 className="text-5xl md:text-4xl lg:text-8xl font-bold tracking-tight mb-1 text-gradient">
+              {t.title}
+            </h1>
           </div>
-        </div>
 
-        <h1 className="text-4xl font-bold text-white mb-2">{t.title}</h1>
-        <p className="text-gray-500 mb-8">{t.updated}</p>
+          {/* Grid Layout (Responsive) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+            {t.sections.map((section, idx) => (
+              <article 
+                key={section.id} 
+                className={`
+                  group relative flex flex-col p-8 rounded-[32px] glass-panel
+                  hover:bg-white/[0.05] transition-all duration-500 hover:border-white/20
+                  ${idx === 0 ? 'md:col-span-2 lg:col-span-2 bg-gradient-to-br from-indigo-500/5 to-transparent' : ''}
+                `}
+              >
+                {/* Decorative Number */}
+                <span 
+                  className="absolute top-8 right-8 text-6xl md:text-7xl font-mono font-bold text-white/[0.03] group-hover:text-white/[0.07] transition-colors select-none pointer-events-none"
+                  aria-hidden="true"
+                >
+                  {section.number}
+                </span>
 
-        <div className="space-y-8">
-          {t.sections.map((section, index) => (
-            <section key={index}>
-              <h2 className="text-2xl font-semibold text-white mb-3">{section.title}</h2>
-              <p>{section.text}</p>
-              
-              {/* Varsa Liste */}
-              {section.list && (
-                <ul className="list-disc pl-5 mt-2 space-y-1">
-                  {section.list.map((item, i) => (
-                    <li key={i} dangerouslySetInnerHTML={{ __html: item.replace(':', ':</strong>').replace(/^/, '<strong>') }} />
-                  ))}
-                </ul>
-              )}
+                <div className="mt-2 mb-6">
+                  {/* Icons for specific sections */}
+                  {idx === 0 && <Globe className="text-indigo-400 mb-5" size={32} strokeWidth={1.5} />}
+                  {idx === 3 && <Lock className="text-emerald-400 mb-5" size={28} strokeWidth={1.5} />}
+                  {idx === 4 && <Cpu className="text-blue-400 mb-5" size={28} strokeWidth={1.5} />}
+                  
+                  <h2 className="text-2xl font-bold text-slate-100 tracking-tight mb-4">
+                    {section.title}
+                  </h2>
+                  <p className="text-zinc-400 leading-relaxed text-[17px]">
+                    {section.text}
+                  </p>
+                </div>
 
-              {/* Varsa Alt Metin */}
-              {section.subtext && (
-                <p className="mt-2 opacity-80">{section.subtext}</p>
-              )}
-            </section>
-          ))}
-        </div>
+                {/* List Items */}
+                {section.list && (
+                  <ul className="mt-auto space-y-4 pt-6 border-t border-white/5">
+                    {section.list.map((item, i) => (
+                      <li key={i} className="flex items-start gap-3 text-[15px]">
+                        <Check size={18} className="text-emerald-500 mt-1 shrink-0" />
+                        <div>
+                          <strong className="text-zinc-200 font-medium tracking-wide block mb-0.5">{item.label}</strong>
+                          <span className="block text-zinc-500 leading-snug">{item.desc}</span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
 
-        <div className="mt-12 pt-8 border-t border-gray-800 text-sm text-gray-600 text-center">
-          &copy; {new Date().getFullYear()} Namaz Vakti App. All rights reserved.
-        </div>
+                {/* Subtext Box */}
+                {section.subtext && (
+                  <div className="mt-4 text-[13px] font-mono text-indigo-300/70 bg-indigo-500/[0.08] p-4 rounded-xl border border-indigo-500/10">
+                    <span className="opacity-50 mr-2">{">"}</span> {section.subtext}
+                  </div>
+                )}
+              </article>
+            ))}
+          </div>
+
+          {/* Footer */}
+          <footer className="mt-32 pt-12 border-t border-white/10 flex flex-col md:flex-row justify-between items-center text-sm text-zinc-500 gap-6">
+            <p>&copy; {new Date().getFullYear()} Namaz Vakti.</p>
+            <div className="flex items-center gap-4">
+              <span className="font-mono text-xs border border-white/10 px-3 py-1.5 rounded-lg bg-white/[0.02]">
+                {t.updated}
+              </span>
+            </div>
+          </footer>
+        </main>
+
+        {/* --- BACK TO TOP (Smooth Interaction) --- */}
+        <button
+          onClick={scrollToTop}
+          className={`
+            fixed bottom-8 right-8 z-50 p-4 rounded-full bg-indigo-600 text-white shadow-[0_10px_40px_-10px_rgba(79,70,229,0.5)] 
+            hover:bg-indigo-500 hover:scale-110 active:scale-95 transition-all duration-500 cubic-bezier(0.4, 0, 0.2, 1)
+            focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-600 focus:ring-offset-black
+            ${showTopBtn ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0 pointer-events-none'}
+          `}
+          aria-label="Back to top"
+        >
+          <ArrowUp size={24} strokeWidth={2.5} />
+        </button>
+
       </div>
-    </main>
+    </>
   );
 }

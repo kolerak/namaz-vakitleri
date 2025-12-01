@@ -60,6 +60,15 @@ const translations = {
     or: "- VEYA -",
     autoLocationAria: "Otomatik konum bul",
     closeAria: "Ayarları kapat",
+    backToAuto: "Otomatiğe Dön",
+    selectedSuffix: "(Seçili)",
+    defaultCountdown: "00sa 00dk 00sn",
+    time_h: "sa",
+    time_m: "dk",
+    time_s: "sn",
+    timeIsUp: "Vakit Geldi",
+    notifBody: "{city} için {prayer} vakti girdi.", // Dinamik yapı
+    currentLocationLabel: "Mevcut Konum",
   },
 
   en: {
@@ -103,6 +112,15 @@ const translations = {
     or: "- OR -",
     autoLocationAria: "Find auto location",
     closeAria: "Close settings",
+    backToAuto: "Back to auto",
+    selectedSuffix: "(Selected)",
+    defaultCountdown: "0h 0m 0s",
+    time_h: "h",
+    time_m: "m",
+    time_s: "s",
+    timeIsUp: "Time for",
+    notifBody: "It is time for {prayer} in {city}.",
+    currentLocationLabel: "Current Location",
   },
 
   ar: {
@@ -146,6 +164,16 @@ const translations = {
     or: "- أو -",
     autoLocationAria: "تحديد الموقع تلقائياً",
     closeAria: "إغلاق الإعدادات",
+    backToAuto: "العودة إلى التلقائي",
+    selectedSuffix: "(محدد)",
+    defaultCountdown: "0س 0د 0ث",
+    time_h: "س",
+    time_m: "د",
+    time_s: "ث",
+    timeIsUp: "حان وقت",
+    notifBody: "حان وقت صلاة {prayer} في {city}.",
+    currentLocationLabel: "الموقع الحالي",
+    
   },
 };
 

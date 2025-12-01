@@ -1,165 +1,157 @@
-import React from 'react';
-import { Settings, MapPin, Bell, BellOff, X } from 'lucide-react';
-import { useSettings } from '../context/SettingsContext';
-import CitySearch from './CitySearch';
+import { X, MapPin, Bell, Globe, Navigation, Settings as SettingsIcon, Check, ChevronRight } from "lucide-react";
+import { useSettings } from "../context/SettingsContext";
+import CitySearch from "./CitySearch";
 
-const SettingsModal = ({ isOpen, onClose, onAutoLocation }) => {
+export default function SettingsModal({ isOpen, onClose, onAutoLocation }) {
   const {
-    language,
-    setLanguage,
-    setCity,
-    setCoords,
-    t,
-    notificationsEnabled,
-    setNotificationsEnabled
+    language, setLanguage, setCity, setCoords, t,
+    notificationsEnabled, setNotificationsEnabled
   } = useSettings();
 
   if (!isOpen) return null;
 
   const handleCitySelect = (selectedData) => {
     setCity(selectedData.name);
-    setCoords({
-      lat: parseFloat(selectedData.lat),
-      lng: parseFloat(selectedData.lng)
-    });
-    onClose(); 
+    setCoords({ lat: parseFloat(selectedData.lat), lng: parseFloat(selectedData.lng) });
   };
 
-  // Bildirim fonksiyonu (dil uyumlu)
   const toggleNotifications = async () => {
-    // Kapalıysa aç
     if (!notificationsEnabled) {
-      if (!("Notification" in window)) {
-        alert(t.browserNoNotif);
-        return;
-      }
-
-      const permission = await Notification.requestPermission();
-
-      if (permission === "granted") {
+      if (!("Notification" in window)) { alert(t.browserNoNotif); return; }
+      const p = await Notification.requestPermission();
+      if (p === "granted") {
         setNotificationsEnabled(true);
-
-        // Test bildirimi dil uyumlu
-        try {
-          new Notification(t.testTitle, {
-            body: t.testBody,
-            icon: "/icon.png",
-            silent: true
-          });
-        } catch {}
-
+        try { new Notification(t.testTitle, { body: t.testBody, icon: "/icon.png", silent: true }); } catch {}
       } else {
         alert(t.permissionDenied);
         setNotificationsEnabled(false);
       }
-
-      return;
+    } else {
+      setNotificationsEnabled(false);
     }
-
-    // Açıkken kapatma
-    setNotificationsEnabled(false);
   };
 
   return (
     <div
-      className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-300"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      role="dialog"
+      aria-modal="true"
     >
-      <div className="bg-gray-900 text-white w-full max-w-md rounded-3xl p-6 shadow-2xl border border-gray-700 relative flex flex-col max-h-[90vh]">
+      {/* Modal Container: max-w-md ile biraz daha genişletildi */}
+      <div className="bg-[#121212] border border-white/10 w-full max-w-md rounded-[24px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[85vh]">
         
-        {/* Başlık */}
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold flex items-center gap-2">
-            <Settings className="text-yellow-400" /> {t.settings}
+        {/* --- Header --- */}
+        <div className="flex items-center justify-between px-6 py-5 border-b border-white/5 bg-white/[0.02]">
+          <h2 className="text-white font-bold text-lg tracking-wide flex items-center gap-2">
+            <SettingsIcon size={20} className="text-yellow-500" />
+            {t.settings}
           </h2>
           <button
             onClick={onClose}
-            aria-label={t.close || "Close"}
-            className="p-2 bg-gray-800 rounded-full hover:bg-gray-700 transition"
+            className="p-2 -mr-2 text-zinc-400 hover:text-white bg-transparent hover:bg-white/10 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-white/20"
+            aria-label="Kapat"
           >
             <X size={20} />
           </button>
         </div>
 
-        <div className="space-y-6 overflow-visible pr-2">
-
-          {/* Dil seçimi */}
-          <div>
-            <label className="block text-sm text-gray-400 mb-2">{t.language}</label>
-            <div className="flex gap-2">
-              {['tr', 'en', 'ar'].map(lang => (
-                <button
-                  key={lang}
-                  onClick={() => setLanguage(lang)}
-                  className={`flex-1 py-2 rounded-xl border transition ${
-                    language === lang
-                      ? "bg-yellow-500 text-black border-yellow-500 font-bold"
-                      : "border-gray-600 hover:bg-gray-800"
-                  }`}
-                >
-                  {lang.toUpperCase()}
-                </button>
-              ))}
+        {/* --- Body --- */}
+        <div className="p-6 space-y-8 overflow-y-auto scrollbar-thin">
+          
+          {/* Bölüm 1: Konum */}
+          <section className="space-y-4">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2">
+                <MapPin size={14} /> {t.location}
+              </label>
             </div>
-          </div>
-
-          {/* Konum seçimi */}
-          <div>
-            <label className="block text-sm text-gray-400 mb-2">{t.location}</label>
-            <div className="mb-3 relative z-50">
-              <CitySearch placeholder={t.cityPlaceholder} onSelectCity={handleCitySelect} />
+            
+            <div className="relative z-50">
+              <CitySearch onSelectCity={handleCitySelect} />
             </div>
 
-            <div className="flex items-center justify-center my-2 text-gray-500 text-xs">
-              {t.or || "-"} 
+            <div className="relative flex items-center py-2">
+              <div className="flex-grow border-t border-white/10"></div>
+              <span className="flex-shrink-0 mx-4 text-[10px] text-zinc-600 uppercase tracking-wider">{t.or}</span>
+              <div className="flex-grow border-t border-white/10"></div>
             </div>
 
             <button
               onClick={() => { onAutoLocation(); onClose(); }}
-              className="w-full flex items-center justify-center gap-2 bg-blue-600/20 text-blue-400 border border-blue-600/50 py-3 rounded-xl hover:bg-blue-600/30 transition"
+              className="w-full flex items-center justify-center gap-2 bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 border border-blue-600/20 hover:border-blue-600/30 py-3 rounded-xl text-sm font-medium transition-all active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-blue-500/30"
             >
-              <MapPin size={18} /> {t.autoLocation}
+              <Navigation size={16} />
+              {t.autoLocation}
             </button>
-          </div>
+          </section>
 
-          {/* Bildirimler */}
-          <div className="pt-4 border-t border-gray-800">
-            <label className="block text-sm text-gray-400 mb-2">
-              {t.notifications}
+          {/* Bölüm 2: Tercihler */}
+          <section className="space-y-4">
+            <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2">
+              <Globe size={14} /> {t.language} & {t.notifications}
             </label>
 
-            <button
-              onClick={toggleNotifications}
-              role="switch"
-              aria-checked={notificationsEnabled}
-              className={`w-full flex items-center justify-between p-4 rounded-xl transition border ${
-                notificationsEnabled
-                  ? "bg-green-900/30 border-green-500/50 text-green-400"
-                  : "bg-gray-800 border-gray-700 text-gray-400 hover:bg-gray-700"
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                {notificationsEnabled ? <Bell size={20}/> : <BellOff size={20}/>}
-                <span className="font-medium">
-                  {notificationsEnabled ? t.notifOn : t.notifOff}
-                </span>
+            <div className="space-y-3">
+              {/* Dil Seçimi */}
+              <div className="grid grid-cols-3 gap-2">
+                {['tr', 'en', 'ar'].map(lang => (
+                  <button
+                    key={lang}
+                    onClick={() => setLanguage(lang)}
+                    className={`relative py-2.5 text-xs font-bold rounded-xl border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-500/30 ${
+                      language === lang
+                        ? "bg-white text-black border-white shadow-lg scale-[1.02]"
+                        : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-600 hover:text-white"
+                    }`}
+                  >
+                    {lang.toUpperCase()}
+                  </button>
+                ))}
               </div>
 
-              <div
-                className={`w-11 h-6 rounded-full relative transition-colors duration-300 ${
-                  notificationsEnabled ? "bg-green-500" : "bg-gray-600"
-                }`}>
-                <div
-                  className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-all duration-300 ${
-                    notificationsEnabled ? "left-6" : "left-1"
-                  }`} />
-              </div>
-            </button>
-          </div>
+              {/* Bildirim Switch (iOS Style) */}
+              <button
+                onClick={toggleNotifications}
+                className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 ${
+                  notificationsEnabled
+                    ? "bg-emerald-950/30 border-emerald-500/30"
+                    : "bg-zinc-900 border-zinc-800 hover:border-zinc-700"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`p-2 rounded-lg ${notificationsEnabled ? 'bg-emerald-500/20 text-emerald-400' : 'bg-zinc-800 text-zinc-500'}`}>
+                    <Bell size={18} className={notificationsEnabled ? 'fill-current' : ''} />
+                  </div>
+                  <div className="text-left">
+                    <span className={`block text-sm font-semibold ${notificationsEnabled ? 'text-emerald-200' : 'text-zinc-400'}`}>
+                      {t.notifications}
+                    </span>
+                    <span className="text-[10px] text-zinc-500">
+                      {notificationsEnabled ? t.notifOn : t.notifOff}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Switch Graphic */}
+                <div className={`w-12 h-7 rounded-full relative transition-colors duration-300 ${notificationsEnabled ? "bg-emerald-500" : "bg-zinc-700"}`}>
+                  <div className={`absolute top-1 w-5 h-5 bg-white rounded-full shadow-sm transition-all duration-300 flex items-center justify-center ${notificationsEnabled ? "left-[26px]" : "left-1"}`}>
+                    {notificationsEnabled && <Check size={12} className="text-emerald-600 stroke-[4]" />}
+                  </div>
+                </div>
+              </button>
+            </div>
+          </section>
         </div>
+
+        {/* --- Footer --- */}
+        <div className="p-4 bg-black/20 text-center border-t border-white/5 backdrop-blur-sm">
+          <p className="text-[10px] text-zinc-600 font-medium">
+            {t.modalDesc}
+          </p>
+        </div>
+
       </div>
     </div>
   );
 };
-
-export default SettingsModal;
