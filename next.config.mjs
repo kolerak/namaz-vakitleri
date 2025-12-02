@@ -3,6 +3,7 @@ const nextConfig = {
   output: 'export',
   images: {
     unoptimized: true, // Chrome Eklentisi için şart
+    qualities: [75, 80, 100],
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "commons.wikimedia.org" },

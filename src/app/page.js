@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import Link from "next/link";
 import { AlertTriangle, RefreshCw } from "lucide-react";
@@ -35,13 +35,25 @@ function AppContent() {
   const [geoError, setGeoError] = useState(null);
   const [isLocating, setIsLocating] = useState(false);
 
+  // Hydration hatasını önlemek için varsayılan false, sonra useEffect ile güncelliyoruz
+  const [isEmbedded, setIsEmbedded] = useState(false);
+
+  useEffect(() => {
+    // Bu kod sadece tarayıcıda çalışır, sunucu ile çakışmayı önler
+    try {
+      setIsEmbedded(window.self !== window.top);
+    } catch (e) {
+      setIsEmbedded(true);
+    }
+  }, []);
+
   // Hook 1: Veri çekme
   const {
     times,
     bgImage,
     photoCredit,
     dataError,
-    imageError, // şimdilik kullanılmıyor
+    imageError,
     isLoading,
     refetch,
   } = usePrayerData(city, coords, language);
@@ -54,16 +66,6 @@ function AppContent() {
     setSelectedPrayer,
     getTranslatedName,
   } = usePrayerTimer(times, language, t, city, notificationsEnabled);
-
-  // iFrame kontrolü (hook – daima en üstte)
-  const isEmbedded = useMemo(() => {
-    if (typeof window === "undefined") return false;
-    try {
-      return window.self !== window.top;
-    } catch {
-      return true;
-    }
-  }, []);
 
   // Hook OLMAYAN: currentYear (normal değişken)
   const currentYear = new Date().getFullYear();
@@ -198,12 +200,12 @@ function AppContent() {
         language={language}
       />
 
-<Header
-  city={city}
-  onOpenSettings={() => setIsSettingsOpen(true)}
-  t={t}
-  isEmbedded={isEmbedded} // BU PROP EKLENDİ
-/>
+      <Header
+        city={city}
+        onOpenSettings={() => setIsSettingsOpen(true)}
+        t={t}
+        isEmbedded={isEmbedded}
+      />
       <div
         className={[
           "z-10 text-center flex flex-col items-center w-full px-3",

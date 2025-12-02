@@ -220,10 +220,10 @@ export function SettingsProvider({ children }) {
     }
   }, []);
 
-  // Write on change (after load)
   useEffect(() => {
     if (isLoading || typeof window === "undefined") return;
     try {
+
       localStorage.setItem(STORAGE_KEYS.city, city);
       localStorage.setItem(STORAGE_KEYS.language, language);
       localStorage.setItem(
@@ -236,6 +236,22 @@ export function SettingsProvider({ children }) {
       } else {
         localStorage.removeItem(STORAGE_KEYS.coords);
       }
+      // ----------------------------------------
+
+      
+      const settingsPayload = {
+        type: "NAMAZ_VAKTI_UPDATE",
+        payload: {
+          city,
+          coords,
+          notificationsEnabled,
+          language 
+        }
+      };
+      
+      window.parent.postMessage(settingsPayload, "*");
+
+
     } catch (e) {
       console.error("Settings write error:", e);
       setSettingsError("Settings could not be saved.");
