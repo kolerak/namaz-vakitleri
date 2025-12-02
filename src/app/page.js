@@ -310,6 +310,7 @@ function AppContent() {
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
         onAutoLocation={handleAutoLocation}
+        isEmbedded={isEmbedded}
       />
     </main>
   );
