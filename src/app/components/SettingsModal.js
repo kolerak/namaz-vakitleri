@@ -2,7 +2,8 @@ import { X, MapPin, Bell, Globe, Navigation, Settings as SettingsIcon, Check, Ch
 import { useSettings } from "../context/SettingsContext";
 import CitySearch from "./CitySearch";
 
-export default function SettingsModal({ isOpen, onClose, onAutoLocation }) {
+// isEmbedded prop'unu buraya ekledik ki 'page.js'den gelen bilgiyi alabilelim
+export default function SettingsModal({ isOpen, onClose, onAutoLocation, isEmbedded }) {
   const {
     language, setLanguage, setCity, setCoords, t,
     notificationsEnabled, setNotificationsEnabled
@@ -16,18 +17,38 @@ export default function SettingsModal({ isOpen, onClose, onAutoLocation }) {
   };
 
   const toggleNotifications = async () => {
-    if (!notificationsEnabled) {
-      if (!("Notification" in window)) { alert(t.browserNoNotif); return; }
+    // 1. Zaten açıksa kapat (Her yerde aynı)
+    if (notificationsEnabled) {
+      setNotificationsEnabled(false);
+      return;
+    }
+
+    // 2. Eklenti (iframe) içindeysek direkt AÇ
+    // İzin sormaya gerek yok, background.js hallediyor.
+    if (isEmbedded) {
+      setNotificationsEnabled(true);
+      return;
+    }
+
+    // 3. Normal Web Sitesi ise izin iste (Eski kodun aynısı)
+    if (!("Notification" in window)) { 
+      alert(t.browserNoNotif); 
+      return; 
+    }
+    
+    try {
       const p = await Notification.requestPermission();
       if (p === "granted") {
         setNotificationsEnabled(true);
-        try { new Notification(t.testTitle, { body: t.testBody, icon: "/icon.png", silent: true }); } catch {}
+        try { 
+          new Notification(t.testTitle, { body: t.testBody, icon: "/icon.png", silent: true }); 
+        } catch {}
       } else {
         alert(t.permissionDenied);
         setNotificationsEnabled(false);
       }
-    } else {
-      setNotificationsEnabled(false);
+    } catch (e) {
+      console.error("Bildirim izni hatası:", e);
     }
   };
 
@@ -154,4 +175,4 @@ export default function SettingsModal({ isOpen, onClose, onAutoLocation }) {
       </div>
     </div>
   );
-};
+}
